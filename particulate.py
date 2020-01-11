@@ -4,7 +4,9 @@ import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots()
 
-def arrow(ax, base, size=None, tip=None, color='C0', width=0.01):
+def arrow(ax, base, size=None, tip=None, color='C0', radius=0.01):
+
+    width = radius*2/3
 
     if size is None:
         size = np.array(tip)-np.array(base)
@@ -19,7 +21,7 @@ def arrow(ax, base, size=None, tip=None, color='C0', width=0.01):
     }
     circlestyle = {
         'color': color,
-        'radius': 1.5*width,
+        'radius': radius,
     }
 
     ax.arrow(base[0], base[1], size[0], size[1], **arrowstyle)
