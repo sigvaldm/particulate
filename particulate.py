@@ -70,12 +70,24 @@ class Population(list):
                             lengths=lengths,
                             colors=colors)
 
-    def load(self, fname):
+    def load(self, fname, clear=True):
+        if clear: self.clear()
         file = np.load(fname)
         positions = file['positions']
         lengths = file['lengths']
         colors = file['colors']
         self.from_arrays(positions, lengths, colors)
+
+    def fetch(self, ax, clear=True):
+        if clear: self.clear()
+        for circ in ax.patches:
+            pos = np.array(circ.center)
+            if circ.arrow is not None:
+                length = np.array(circ.arrow.length)
+            else:
+                length = np.array([0,0])
+            color = circ.get_fc()
+            self.append(Particle(pos, length, color))
 
 class Particle(object):
     def __init__(self, pos, length, color='C0'):
@@ -214,16 +226,3 @@ class Interactive(object):
     def next_color(self):
         self.color_ind = (self.color_ind+1)%len(self.colors)
         self.color = self.colors[self.color_ind]
-
-    def get_population(self):
-        particles = Population()
-        for circ in self.ax.patches:
-            pos = np.array(circ.center)
-            if circ.arrow is not None:
-                length = np.array(circ.arrow.length)
-            else:
-                length = np.array([0,0])
-            color = circ.get_fc()
-            particles.append(Particle(pos, length, color))
-
-        return particles

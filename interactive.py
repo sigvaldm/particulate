@@ -2,21 +2,19 @@ from particulate import *
 
 fig, ax = plt.subplots()
 
-interact = Interactive(fig)
-
 ax.set_xlim(0,1)
 ax.set_ylim(0,1)
 ax.set_aspect('equal')
 
-population = Population()
 try:
+    population = Population()
     population.load('dummy.npz')
+    population.plot(ax)
 except:
     pass
 
-population.plot(ax)
-
+inter = Interactive(fig)
 plt.show()
 
-population = interact.get_population()
+population.fetch(ax)
 population.save('dummy.npz')
