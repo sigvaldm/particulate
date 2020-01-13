@@ -74,7 +74,7 @@ class Interactive(object):
         self.fig = fig
         self.ax = fig.axes[0] if ax == None else ax
 
-        self.current_circle = None
+        self.current_circle = circle(self.ax, [0.5,0.5])
         self.current_arrow = None
 
         fig.canvas.mpl_connect('button_press_event', self.onClick)
@@ -83,9 +83,11 @@ class Interactive(object):
 
     def onClick(self, event):
         self.state = (self.state+1)%3
-        if self.state==0:
-            self.current_circle = None
-            self.current_arrow = None
+
+        # if self.state==0:
+        #     self.current_circle = None
+        #     self.current_arrow = None
+
         # if self.state==0:
         #     self.current_circle = circle(self.ax, [event.xdata, event.ydata])
         # elif self.state==1:
@@ -94,15 +96,30 @@ class Interactive(object):
         # elif self.state==2:
         #     self.current_arrow = None
 
-    def onMove(self, event):
         if self.state==0:
-            new_circle = circle(self.ax, [event.xdata, event.ydata])
-            if self.current_circle is not None: self.current_circle.remove()
-            self.current_circle = new_circle
+            self.current_circle = circle(self.ax, [0.5, 0.5])
         elif self.state==1:
-            new_arrow = arrow(self.ax, self.current_circle, tip=[event.xdata, event.ydata])
-            if self.current_arrow is not None: self.current_arrow.remove()
-            self.current_arrow = new_arrow
+            self.current_arrow = arrow(self.ax, self.current_circle, tip=[event.xdata, event.ydata])
+            self.current_circle = None
+        elif self.state==2:
+            self.current_arrow = None
+
+    def onMove(self, event):
+        # if self.state==0:
+        #     new_circle = circle(self.ax, [event.xdata, event.ydata])
+        #     if self.current_circle is not None: self.current_circle.remove()
+        #     self.current_circle = new_circle
+        # elif self.state==1:
+        #     new_arrow = arrow(self.ax, self.current_circle, tip=[event.xdata, event.ydata])
+        #     if self.current_arrow is not None: self.current_arrow.remove()
+        #     self.current_arrow = new_arrow
+
+        if self.current_circle is not None:
+            self.current_circle.remove()
+            self.current_circle = circle(self.ax, [event.xdata, event.ydata])
+        elif self.current_arrow is not None:
+            self.current_arrow.remove()
+            self.current_arrow = arrow(self.ax, self.current_arrow.circle, tip=[event.xdata, event.ydata])
 
         self.fig.canvas.draw()
 
