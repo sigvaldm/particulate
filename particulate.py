@@ -61,8 +61,6 @@ class Interactive(object):
         self.color = self.colors[self.color_ind]
 
         # self.current_artist = circle(self.ax, [0.5, 0.5])
-        circ = circle(self.ax, [0.5, 0.5])
-        arrow(self.ax, circ, [0.1, 0])
         self.current_artist = None
         self.just_picked = False
 
