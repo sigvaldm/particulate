@@ -40,14 +40,69 @@ def arrow(ax, circle, length=None, tip=None, size=0.01):
     circle.arrow = arrow
     return arrow
 
+class Population(list):
+
+    def plot(self, ax):
+        for part in self:
+            part.plot(ax)
+
+    def to_arrays(self):
+        N = len(self)
+        positions = np.zeros((N,2))
+        lengths = np.zeros((N,2))
+        colors = np.zeros((N,4))
+
+        for i in range(N):
+            positions[i,:] = self[i].pos
+            lengths[i,:] = self[i].length
+            colors[i,:] = self[i].color
+
+        return positions, lengths, colors
+
+    def from_arrays(self, positions, lengths, colors):
+        for pos, length, color in zip(positions, lengths, colors):
+            self.append(Particle(pos, length, color))
+
+    def save(self, fname):
+        positions, lengths, colors = self.to_arrays()
+        np.savez_compressed(fname,
+                            positions=positions,
+                            lengths=lengths,
+                            colors=colors)
+
+    def load(self, fname, clear=True):
+        if clear: self.clear()
+        file = np.load(fname)
+        positions = file['positions']
+        lengths = file['lengths']
+        colors = file['colors']
+        self.from_arrays(positions, lengths, colors)
+
+    def fetch(self, ax, clear=True):
+        if clear: self.clear()
+        for circ in ax.patches:
+            pos = np.array(circ.center)
+            if circ.arrow is not None:
+                length = np.array(circ.arrow.length)
+            else:
+                length = np.array([0,0])
+            color = circ.get_fc()
+            self.append(Particle(pos, length, color))
+
 class Particle(object):
-    def __init__(self, pos, vel, color='C0'):
+    def __init__(self, pos, length, color='C0'):
         self.pos = pos
-        self.vel = vel
+        self.length = length
         self.color = color
+
+    def plot(self, ax):
+        circ = circle(ax, self.pos, self.color)
+        if np.linalg.norm(self.length)>1e-10:
+            arrow(ax, circ, length=self.length)
 
 # TODO: Straight angles when holding down ALT
 # TODO: Move only starting point when holding down CTRL (or when NOT holding it down)
+# TODO: Move stuff when dragging instead of clicking
 
 class Interactive(object):
 
