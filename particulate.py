@@ -46,6 +46,9 @@ class Particle(object):
         self.vel = vel
         self.color = color
 
+# TODO: Straight angles when holding down ALT
+# TODO: Move only starting point when holding down CTRL (or when NOT holding it down)
+
 class Interactive(object):
 
     def __init__(self, fig, ax=None, colors=('C0', 'C3')):
@@ -71,11 +74,11 @@ class Interactive(object):
         if event.inaxes != self.ax: return # Mouse outside axes
         pos = [event.xdata, event.ydata]
 
-        if self.just_picked:
-            self.just_picked = False
-            if event.button==MouseButton.LEFT: return
-
         if event.button==MouseButton.LEFT:
+
+            if self.just_picked:
+                self.just_picked = False
+                return
 
             # Place circle
             if isinstance(self.current_artist, mpl.patches.Circle):
@@ -95,8 +98,9 @@ class Interactive(object):
 
         elif event.button==MouseButton.MIDDLE:
 
+            self.next_color()
+
             if isinstance(self.current_artist, mpl.patches.Circle):
-                self.next_color()
                 # self.current_artist.set_fc(self.color) # Doesn't work
                 new_circle = circle(self.ax, self.current_artist.center, color=self.color)
                 if self.current_artist.arrow is not None:
@@ -107,11 +111,15 @@ class Interactive(object):
                 self.current_artist = new_circle
 
             elif isinstance(self.current_artist, mpl.patches.FancyArrow):
-                self.next_color()
                 self.current_artist.set_fc(self.color)
                 # self.current_artist.circle.set_fc(self.color) # Doesn't work
                 self.current_artist.circle.remove()
                 self.current_artist.circle = circle(self.ax, self.current_artist.circle. center, color=self.color)
+                self.current_artist.circle.arrow = self.current_artist
+
+            if self.just_picked:
+                self.just_picked = False
+                self.current_artist = None
 
         elif event.button==MouseButton.RIGHT:
 
@@ -125,6 +133,11 @@ class Interactive(object):
                 self.current_artist.circle.arrow = None
                 self.current_artist.remove()
                 self.current_artist = None
+
+            if self.just_picked:
+                self.just_picked = False
+                self.current_artist = None
+
 
         self.fig.canvas.draw()
 
