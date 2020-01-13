@@ -73,37 +73,58 @@ class Interactive(object):
 
         if self.just_picked:
             self.just_picked = False
-            return
+            if event.button==MouseButton.LEFT: return
 
         if event.button==MouseButton.LEFT:
 
+            # Place circle
             if isinstance(self.current_artist, mpl.patches.Circle):
                 if self.current_artist.arrow is None:
                     self.current_artist = arrow(self.ax, self.current_artist, tip=pos)
                 else:
                     self.current_artist = None
 
+            # Place arrow
             elif isinstance(self.current_artist, mpl.patches.FancyArrow):
                 self.current_artist = None
 
+            # New circle
             elif event.dblclick:
                 circ = circle(self.ax, pos, color=self.color)
                 self.current_artist = arrow(self.ax, circ, tip=pos)
 
         elif event.button==MouseButton.MIDDLE:
-            self.color_ind = (self.color_ind+1)%len(self.colors)
-            self.color = self.colors[self.color_ind]
 
             if isinstance(self.current_artist, mpl.patches.Circle):
-                self.current_artist.set_fc(self.color)
+                self.next_color()
+                # self.current_artist.set_fc(self.color) # Doesn't work
+                new_circle = circle(self.ax, self.current_artist.center, color=self.color)
                 if self.current_artist.arrow is not None:
                     self.current_artist.arrow.set_fc(self.color)
+                    self.current_artist.arrow.circle = new_circle
+                    new_circle.arrow = self.current_artist.arrow
+                self.current_artist.remove()
+                self.current_artist = new_circle
 
             elif isinstance(self.current_artist, mpl.patches.FancyArrow):
+                self.next_color()
                 self.current_artist.set_fc(self.color)
                 # self.current_artist.circle.set_fc(self.color) # Doesn't work
                 self.current_artist.circle.remove()
                 self.current_artist.circle = circle(self.ax, self.current_artist.circle. center, color=self.color)
+
+        elif event.button==MouseButton.RIGHT:
+
+            if isinstance(self.current_artist, mpl.patches.Circle):
+                if self.current_artist.arrow is not None:
+                    self.current_artist.arrow.remove()
+                self.current_artist.remove()
+                self.current_artist = None
+
+            elif isinstance(self.current_artist, mpl.patches.FancyArrow):
+                self.current_artist.circle.arrow = None
+                self.current_artist.remove()
+                self.current_artist = None
 
         self.fig.canvas.draw()
 
@@ -135,3 +156,7 @@ class Interactive(object):
         if self.current_artist is None:
             self.current_artist = event.artist
             self.just_picked = True
+
+    def next_color(self):
+        self.color_ind = (self.color_ind+1)%len(self.colors)
+        self.color = self.colors[self.color_ind]
