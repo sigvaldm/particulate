@@ -1,31 +1,7 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-
-def arrow_old(ax, base, length=None, tip=None, color='C0', size=0.01):
-
-    width = size*2/3
-
-    if length is None:
-        length = np.array(tip)-np.array(base)
-
-    arrowstyle = {
-        'width': width,
-        'head_width': 4*width,
-        'head_length': 4*width,
-        'length_includes_head': False,
-        'facecolor': color,
-        'linewidth': 0,
-    }
-    circlestyle = {
-        'color': color,
-        'radius': size,
-    }
-
-    circ = plt.Circle(base, **circlestyle)
-    ax.add_patch(circ)
-    if np.linalg.norm(length)>1e-10:
-        ax.arrow(base[0], base[1], length[0], length[1], **arrowstyle)
+from matplotlib.backend_bases import MouseButton
 
 def circle(ax, base, color='C0', size=0.01):
 
@@ -39,7 +15,8 @@ def circle(ax, base, color='C0', size=0.01):
     circle.arrow = None
     return ax.add_patch(circle)
 
-def arrow(ax, circle, length=None, tip=None, color='C0', size=0.01):
+def arrow(ax, circle, length=None, tip=None, size=0.01):
+    # TBD: fetch size from circle
 
     base = circle.center
 
@@ -53,7 +30,7 @@ def arrow(ax, circle, length=None, tip=None, color='C0', size=0.01):
         'head_width': 4*width,
         'head_length': 4*width,
         'length_includes_head': False,
-        'facecolor': color,
+        'facecolor': circle.get_fc(),
         'linewidth': 0,
         'picker': True,
     }
@@ -71,15 +48,18 @@ class Particle(object):
 
 class Interactive(object):
 
-    def __init__(self, fig, ax=None):
+    def __init__(self, fig, ax=None, colors=('C0', 'C3')):
 
         self.state = 2 # 0: place particle, 1: place velocity vector
         self.fig = fig
         self.ax = fig.axes[0] if ax == None else ax
+        self.color_ind = 0
+        self.colors = colors
+        self.color = self.colors[self.color_ind]
 
         # self.current_artist = circle(self.ax, [0.5, 0.5])
         circ = circle(self.ax, [0.5, 0.5])
-        arrow(self.ax, circ, [0.1,0])
+        arrow(self.ax, circ, [0.1, 0])
         self.current_artist = None
         self.just_picked = False
 
@@ -88,23 +68,47 @@ class Interactive(object):
         fig.canvas.mpl_connect('pick_event', self.onPick)
 
     def onClick(self, event):
+        if event.inaxes != self.ax: return # Mouse outside axes
         pos = [event.xdata, event.ydata]
 
         if self.just_picked:
             self.just_picked = False
             return
 
-        if isinstance(self.current_artist, mpl.patches.Circle):
-            if self.current_artist.arrow is None:
-                self.current_artist = arrow(self.ax, self.current_artist, tip=pos)
-            else:
+        if event.button==MouseButton.LEFT:
+
+            if isinstance(self.current_artist, mpl.patches.Circle):
+                if self.current_artist.arrow is None:
+                    self.current_artist = arrow(self.ax, self.current_artist, tip=pos)
+                else:
+                    self.current_artist = None
+
+            elif isinstance(self.current_artist, mpl.patches.FancyArrow):
                 self.current_artist = None
-        elif isinstance(self.current_artist, mpl.patches.FancyArrow):
-            self.current_artist = None
-        elif event.dblclick:
-            self.current_artist = circle(self.ax, pos)
+
+            elif event.dblclick:
+                circ = circle(self.ax, pos, color=self.color)
+                self.current_artist = arrow(self.ax, circ, tip=pos)
+
+        elif event.button==MouseButton.MIDDLE:
+            self.color_ind = (self.color_ind+1)%len(self.colors)
+            self.color = self.colors[self.color_ind]
+
+            if isinstance(self.current_artist, mpl.patches.Circle):
+                self.current_artist.set_fc(self.color)
+                if self.current_artist.arrow is not None:
+                    self.current_artist.arrow.set_fc(self.color)
+
+            elif isinstance(self.current_artist, mpl.patches.FancyArrow):
+                self.current_artist.set_fc(self.color)
+                # self.current_artist.circle.set_fc(self.color) # Doesn't work
+                self.current_artist.circle.remove()
+                self.current_artist.circle = circle(self.ax, self.current_artist.circle. center, color=self.color)
+
+        self.fig.canvas.draw()
 
     def onMove(self, event):
+        if event.inaxes != self.ax: return # Mouse outside axes
         pos = [event.xdata, event.ydata]
 
         if isinstance(self.current_artist, mpl.patches.Circle):
@@ -113,8 +117,9 @@ class Interactive(object):
             if self.current_artist.arrow is not None:
                 length = self.current_artist.arrow.length
                 self.current_artist.arrow.remove()
+            color = self.current_artist.get_fc()
             self.current_artist.remove()
-            self.current_artist = circle(self.ax, pos)
+            self.current_artist = circle(self.ax, pos, color=color)
             if length is not None:
                 self.current_artist.arrow = arrow(self.ax, self.current_artist, length=length)
 
