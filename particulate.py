@@ -11,9 +11,9 @@ def circle(ax, base, color='C0', size=0.01):
         'radius': size,
         'picker': True,
     }
-    circle = plt.Circle(base, **circlestyle)
-    circle.arrow = None
-    return ax.add_patch(circle)
+    circ = plt.Circle(base, **circlestyle)
+    circ.arrow = None
+    return ax.add_patch(circ)
 
 def arrow(ax, circle, length=None, tip=None, size=0.01):
     # TBD: fetch size from circle
