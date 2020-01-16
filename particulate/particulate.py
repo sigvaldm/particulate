@@ -238,8 +238,9 @@ class Interactive(object):
     def onPick(self, event):
 
         if self.current_artist is None:
-            self.current_artist = event.artist
-            self.just_picked = True
+            if isinstance(event.artist, (mpl.patches.Circle, mpl.patches.FancyArrow)):
+                self.current_artist = event.artist
+                self.just_picked = True
 
     def next_color(self):
         self.color_ind = (self.color_ind+1)%len(self.colors)
