@@ -111,7 +111,7 @@ class Particle(object):
     def __init__(self, pos, length, color='C0'):
         self.pos = pos
         self.length = length
-        self.color = color
+        self.color = mpl.colors.to_rgba_array(color)[0]
 
     def plot(self, ax):
         circ = circle(ax, self.pos, self.color)
